@@ -8,15 +8,13 @@ from win10toast import ToastNotifier
 class CountdownTimer:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.geometry("460x220") #the size of the main window object
-        self.root.title("Pomodoro Timer") #name of the timer
+        self.root.geometry("460x220")
+        self.root.title("Pomodoro Timer")
 
         #creating the widgets
 
         #the entry placeholder:
-        #this line defines the user entry "space" of the software
         self.time_entry = tk.Entry(self.root, font=("Helvetica", 30))
-        #this next line draws the user interface
         self.time_entry.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
 
         #the start button :
@@ -28,12 +26,58 @@ class CountdownTimer:
         self.stop_button.grid(row=1, column=1, padx=5, pady=5)
 
         #the label that shows the countdown
-        self.time_label = tk.Label(self.root, font=("Helvetica", 30),text="Time: 00:00:00")
-        self.time_label.grid(row=2, column=2, columnspan=2,  padx=5, pady=5)
+        self.time_label = tk.Label(self.root, font=("Helvetica", 30), text="00:00:00")
+        self.time_label.grid(row=2, column=0, columnspan=2,  padx=5, pady=5)
 
         self.stop_loop = False
 
         self.root.mainloop()
 
+    def start_thread(self):
+        t = threading.Thread(target=self.start)
+        t.start()
 
+    def start(self):
+        self.stop_loop = False
+
+        hours, minutes, seconds = 0, 0, 0
+        string_split = self.time_entry.get().split(":")
+        if len(string_split) == 3:
+            hours = int(string_split[0])
+            minutes = int(string_split[1])
+            seconds = int(string_split[2])
+        elif len(string_split) == 2:
+            minutes = int(string_split[0])
+            seconds = int(string_split[1])
+        elif len(string_split) == 1:
+            seconds = int(string_split[0])
+        else:
+            print("Invalid time format")
+            return
+
+        full_seconds = hours * 3600 + minutes * 60 + seconds #calc all the secs to create the loop
+
+        while full_seconds > 0 and not self.stop_loop:
+            full_seconds -= 1
+
+            minutes, seconds = divmod(full_seconds, 60)
+            hours, minutes = divmod(minutes, 60)
+
+            self.time_label.config(text=f"{hours:02d}:{minutes:02d}:{seconds:02d}")
+            self.root.update()
+            time.sleep(1)
+
+        if not self.stop_loop:
+            toast = ToastNotifier()
+            toast.show_toast("Pomodoro Timer", "Time is up!", duration=5)
+
+
+
+    def stop(self):
+        self.stop_loop = True
+        self.time_label.config(text="Text: 00:00:00")
+
+
+
+CountdownTimer()
 
